@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>David Tracker & Inventory Database</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Fonts: Inter & Plus Jakarta Sans / Outfit for Title Style -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .title-styled {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            text-shadow: -1.5px 1px 0px rgba(239, 68, 68, 0.7), 1.5px -0.5px 0px rgba(56, 189, 248, 0.7);
+        }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+        }
+    </style>
+</head>
+<body class="h-full bg-lime-100/70 dark:bg-[#0d160b] text-slate-800 dark:text-lime-50 transition-colors duration-200 flex flex-col selection:bg-lime-200 dark:selection:bg-lime-900">
+
+    <header class="bg-lime-50/90 dark:bg-[#121d10]/90 backdrop-blur-md border-b border-lime-300/80 dark:border-lime-900/60 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-br from-lime-500 to-emerald-600 text-white p-2 rounded-xl shadow-md shadow-lime-500/20 flex items-center justify-center">
+                    <i data-lucide="package-search" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-lime-100 flex items-center gap-2">
+                        <span class="title-styled text-slate-900 dark:text-lime-100">Inventory</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-lime-200/80 dark:bg-lime-950/90 text-lime-800 dark:text-lime-300 font-semibold border border-lime-300 dark:border-lime-800 font-sans tracking-normal">v2.0</span>
+                    </h1>
+                    <p data-i18n="tagline" class="text-xs text-lime-800/70 dark:text-lime-400/80 font-medium">Never lose your gear again</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <!-- Language Switcher Toggle -->
+                <button id="lang-toggle" onclick="toggleLanguage()" class="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-lime-200/50 dark:bg-[#1a2a17] text-lime-900 dark:text-lime-200 hover:bg-lime-200 dark:hover:bg-[#23381e] text-xs sm:text-sm font-semibold transition border border-lime-300/70 dark:border-lime-800/60" title="Switch Language / Keisti Kalbą">
+                    <i data-lucide="languages" class="w-4 h-4 text-emerald-600 dark:text-lime-400"></i>
+                    <span id="lang-label">LT</span>
+                </button>
+
+                <!-- Theme Toggle -->
+                <button id="theme-toggle" class="p-2.5 rounded-xl bg-lime-200/50 dark:bg-[#1a2a17] text-lime-800 dark:text-lime-300 hover:bg-lime-200 dark:hover:bg-[#23381e] transition border border-lime-300/70 dark:border-lime-800/60" title="Toggle Dark/Light Mode">
+                    <i data-lucide="sun" class="w-5 h-5 hidden dark:block text-amber-400"></i>
+                    <i data-lucide="moon" class="w-5 h-5 block dark:hidden text-lime-900"></i>
+                </button>
+
+                <!-- Settings Button -->
+                <button onclick="openSettingsModal()" class="p-2.5 rounded-xl bg-lime-200/50 dark:bg-[#1a2a17] text-lime-800 dark:text-lime-300 hover:bg-lime-200 dark:hover:bg-[#23381e] transition border border-lime-300/70 dark:border-lime-800/60" title="Settings">
+                    <i data-lucide="settings" class="w-5 h-5 text-emerald-600 dark:text-lime-400"></i>
+                </button>
+
+                <!-- Print Labels Button -->
+                <button onclick="openPrintModal()" class="hidden sm:flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-lime-200/50 dark:bg-[#1a2a17] text-lime-900 dark:text-lime-200 hover:bg-lime-200 dark:hover:bg-[#23381e] text-sm font-medium transition border border-lime-300/70 dark:border-lime-800/60">
+                    <i data-lucide="printer" class="w-4 h-4 text-emerald-600 dark:text-lime-400"></i>
+                    <span data-i18n="btnPrint">Print Tags</span>
+                </button>
+
+                <!-- Manage Shelves / Locations Button -->
+                <button onclick="openLocationModal()" class="hidden lg:flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-lime-200/50 dark:bg-[#1a2a17] text-lime-900 dark:text-lime-200 hover:bg-lime-200 dark:hover:bg-[#23381e] text-sm font-medium transition border border-lime-300/70 dark:border-lime-800/60" title="Manage Shelves & Storage Locations">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-emerald-600 dark:text-lime-400"></i>
+                    <span data-i18n="btnShelves">Shelves</span>
+                </button>
+
+                <!-- Manage Categories Button -->
+                <button onclick="openCategoryModal()" class="hidden lg:flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-lime-200/50 dark:bg-[#1a2a17] text-lime-900 dark:text-lime-200 hover:bg-lime-200 dark:hover:bg-[#23381e] text-sm font-medium transition border border-lime-300/70 dark:border-lime-800/60" title="Manage Categories">
+                    <i data-lucide="tags" class="w-4 h-4 text-emerald-600 dark:text-lime-400"></i>
+                    <span data-i18n="btnCategories">Categories</span>
+                </button>
+
+                <!-- Export Data -->
+                <button onclick="exportData()" class="hidden md:flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-lime-200/50 dark:bg-[#1a2a17] text-lime-900 dark:text-lime-200 hover:bg-lime-200 dark:hover:bg-[#23381e] text-sm font-medium transition border border-lime-300/70 dark:border-lime-800/60" title="Backup Database">
+                    <i data-lucide="download" class="w-4 h-4 text-lime-700 dark:text-lime-400"></i>
+                    <span data-i18n="btnExport">Export</span>
+                </button>
+
+                <!-- Import Data -->
+                <button onclick="triggerImport()" class="hidden md:flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-lime-200/50 dark:bg-[#1a2a17] text-lime-900 dark:text-lime-200 hover:bg-lime-200 dark:hover:bg-[#23381e] text-sm font-medium transition border border-lime-300/70 dark:border-lime-800/60" title="Import JSON File">
+                    <i data-lucide="upload" class="w-4 h-4 text-lime-700 dark:text-lime-400"></i>
+                    <span data-i18n="btnImport">Import</span>
+                </button>
+
+                <!-- Hidden file input for importing JSON -->
+                <input type="file" id="import-file-input" accept=".json" onchange="importData(event)" class="hidden">
+
+                <!-- Add Item Button -->
+                <button onclick="openModal()" class="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-medium shadow-lg shadow-emerald-600/20 transition">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
+                    <span data-i18n="btnAddItem">Add Item</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
+        
+        <!-- Stats Bar -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-lime-50/80 dark:bg-[#121d10]/90 p-4 rounded-2xl border border-lime-300/80 dark:border-lime-900/60 shadow-sm flex items-center space-x-4 backdrop-blur-sm">
+                <div class="p-3 bg-lime-200/70 dark:bg-lime-950/80 text-lime-800 dark:text-lime-300 rounded-xl border border-lime-300 dark:border-lime-800/60">
+                    <i data-lucide="boxes" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p data-i18n="statTotal" class="text-xs font-semibold text-lime-900/70 dark:text-lime-300/70">Total Items</p>
+                    <h3 id="stat-total" class="text-xl font-extrabold text-slate-900 dark:text-lime-100">0</h3>
+                </div>
+            </div>
+            <div class="bg-lime-50/80 dark:bg-[#121d10]/90 p-4 rounded-2xl border border-lime-300/80 dark:border-lime-900/60 shadow-sm flex items-center space-x-4 backdrop-blur-sm">
+                <div class="p-3 bg-lime-200/70 dark:bg-lime-950/80 text-lime-800 dark:text-lime-300 rounded-xl border border-lime-300 dark:border-lime-800/60">
+                    <i data-lucide="map-pin" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p data-i18n="statLocations" class="text-xs font-semibold text-lime-900/70 dark:text-lime-300/70">Locations</p>
+                    <h3 id="stat-locations" class="text-xl font-extrabold text-slate-900 dark:text-lime-100">0</h3>
+                </div>
+            </div>
+            <div class="bg-lime-50/80 dark:bg-[#121d10]/90 p-4 rounded-2xl border border-lime-300/80 dark:border-lime-900/60 shadow-sm flex items-center space-x-4 backdrop-blur-sm">
+                <div class="p-3 bg-lime-200/70 dark:bg-lime-950/80 text-lime-800 dark:text-lime-300 rounded-xl border border-lime-300 dark:border-lime-800/60">
+                    <i data-lucide="tag" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p data-i18n="statCategories" class="text-xs font-semibold text-lime-900/70 dark:text-lime-300/70">Categories</p>
+                    <h3 id="stat-categories" class="text-xl font-extrabold text-slate-900 dark:text-lime-100">0</h3>
+                </div>
+            </div>
+            <div class="bg-lime-50/80 dark:bg-[#121d10]/90 p-4 rounded-2xl border border-lime-300/80 dark:border-lime-900/60 shadow-sm flex items-center space-x-4 backdrop-blur-sm">
+                <div class="p-3 bg-lime-200/70 dark:bg-lime-950/80 text-lime-800 dark:text-lime-300 rounded-xl border border-lime-300 dark:border-lime-800/60">
+                    <i data-lucide="hash" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p data-i18n="statNextTag" class="text-xs font-semibold text-lime-900/70 dark:text-lime-300/70">Next Tag No.</p>
+                    <h3 id="stat-next-tag" class="text-xl font-extrabold text-slate-900 dark:text-lime-100">#1</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters & Search Toolbar -->
+        <div class="bg-lime-50/80 dark:bg-[#121d10]/90 p-4 rounded-2xl border border-lime-300/80 dark:border-lime-900/60 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between backdrop-blur-sm">
+            <div class="relative w-full sm:w-80">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3.5 text-lime-700/60 dark:text-lime-400/60"></i>
+                <input type="text" id="search-input" oninput="filterItems()" placeholder="Search by name, tag #, notes..." 
+                    class="w-full pl-10 pr-4 py-2.5 bg-lime-100/60 dark:bg-[#0a1108] border border-lime-300 dark:border-lime-900/80 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-lime-500 text-slate-900 dark:text-lime-100 placeholder-lime-800/50 dark:placeholder-lime-400/40">
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <select id="filter-location" onchange="filterItems()" class="px-3.5 py-2.5 bg-lime-100/60 dark:bg-[#0a1108] border border-lime-300 dark:border-lime-900/80 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-lime-500 text-slate-900 dark:text-lime-100">
+                    <option value="">All Locations</option>
+                </select>
+
+                <select id="filter-category" onchange="filterItems()" class="px-3.5 py-2.5 bg-lime-100/60 dark:bg-[#0a1108] border border-lime-300 dark:border-lime-900/80 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-lime-500 text-slate-900 dark:text-lime-100">
+                    <option value="">All Categories</option>
+                </select>
+
+                <button onclick="resetFilters()" data-i18n="btnReset" class="px-3 py-2.5 text-sm font-semibold text-lime-900/70 hover:text-lime-950 dark:text-lime-400 dark:hover:text-lime-200">
+                    Reset
+                </button>
+            </div>
+        </div>
+
+        <!-- Inventory Data Table -->
+        <div class="flex-1 bg-lime-50/80 dark:bg-[#121d10]/90 rounded-2xl border border-lime-300/80 dark:border-lime-900/60 shadow-sm overflow-hidden flex flex-col backdrop-blur-sm">
+            <div class="overflow-x-auto flex-1">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-lime-300/80 dark:border-lime-900/80 bg-lime-200/60 dark:bg-[#0a1208] text-xs font-bold text-lime-950 dark:text-lime-300 uppercase tracking-wider">
+                            <th data-i18n="thTag" class="py-3.5 px-4">Tag #</th>
+                            <th data-i18n="thName" class="py-3.5 px-4">Item Name</th>
+                            <th data-i18n="thCategory" class="py-3.5 px-4">Category</th>
+                            <th data-i18n="thLocation" class="py-3.5 px-4">Storage Location</th>
+                            <th data-i18n="thNotes" class="py-3.5 px-4">Notes / Details</th>
+                            <th data-i18n="thActions" class="py-3.5 px-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="items-table-body" class="divide-y divide-lime-200/80 dark:divide-lime-900/50 text-sm">
+                        <!-- Items rendered dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden flex-col items-center justify-center p-12 text-center">
+                <div class="w-16 h-16 bg-lime-200/80 dark:bg-lime-950/80 text-lime-800 dark:text-lime-300 rounded-2xl flex items-center justify-center mb-4 border border-lime-300 dark:border-lime-800">
+                    <i data-lucide="package-open" class="w-8 h-8"></i>
+                </div>
+                <h3 data-i18n="emptyTitle" class="text-base font-semibold text-slate-800 dark:text-lime-100">No items found</h3>
+                <p data-i18n="emptyDesc" class="text-sm text-lime-900/70 dark:text-lime-400/80 mt-1 max-w-sm">Start adding your belongings and label them with numbers so you never lose track of where they are.</p>
+                <button onclick="openModal()" data-i18n="btnAddFirst" class="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-emerald-700 transition">
+                    Add First Item
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add / Edit Item Modal -->
+    <div id="item-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-lime-50 dark:bg-[#121d10] rounded-2xl max-w-md w-full border border-lime-300 dark:border-lime-900/80 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+            <div class="px-6 py-4 border-b border-lime-200 dark:border-lime-900/80 flex items-center justify-between bg-lime-100/50 dark:bg-[#0a1208]">
+                <h3 id="modal-title" class="font-bold text-lg text-slate-900 dark:text-lime-100">Add New Item</h3>
+                <button onclick="closeModal()" class="p-1 rounded-lg text-lime-800/60 dark:text-lime-400/60 hover:bg-lime-200 dark:hover:bg-[#1a2a17] transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form id="item-form" onsubmit="saveItem(event)" class="p-6 space-y-4">
+                <input type="hidden" id="item-id">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label data-i18n="lblCategory" class="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-1">Category *</label>
+                        <div class="flex gap-2">
+                            <select id="item-category" required class="w-full px-3 py-2.5 bg-lime-100/60 dark:bg-[#0a1108] border border-lime-300 dark:border-lime-900/80 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-lime-100">
+                                <option value="" data-i18n="optSelectCat">Select Category</option>
+                            </select>
+                            <button type="button" onclick="openCategoryModal()" class="p-2.5 bg-lime-200/70 dark:bg-[#1a2a17] hover:bg-lime-200 dark:hover:bg-[#23381e] text-emerald-800 dark:text-lime-300 rounded-xl transition border border-lime-300 dark:border-lime-800/80" title="Add / Manage Categories">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label data-i18n="lblTag" class="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-1">Tag / Item Number *</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-emerald-600 dark:text-emerald-400 font-bold">#</span>
+                            <input type="number" id="item-tag" required min="1" placeholder="1" 
+                                class="w-full pl-8 pr-3 py-2.5 bg-lime-100/60 dark:bg-[#0a1108] border border-lime-300 dark:border-lime-900/80 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-slate-900 dark:text-lime-100">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label data-i18n="lblItemName" class="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-1">Item Name *</label>
+                    <input type="text" id="item-name" required placeholder="e.g. Cordless Drill Set" 
+                        class="w-full px-3 py-2.5 bg-lime-100/60 dark:bg-[#0a1108] border border-lime-300 dark:border-lime-900/80 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-lime-100 placeholder-lime-800/50 dark:placeholder-lime-400/40">
+                </div>
+
+                <div>
+                    <label data-i18n="lblLocation" class="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-1">Storage Location / Shelf *</label>
+                    <div class="flex gap-2">
+                        <select id="item-location" required class="w-full px-3 py-2.5 bg-lime-100/60 dark:bg-[#0a1108] border border-lime-300 dark:border-lime-900/80 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-lime-100">
+                            <option value="" data-i18n="optSelectLoc">Select Location or Shelf</option>
+                        </select>
+                        <button type="button" onclick="openLocationModal()" class="p-2.5 bg-lime-200/70 dark:bg-[#1a2a17] hover:bg-lime-200 dark:hover:bg-[#23381e] text-emerald-800 dark:text-lime-300 rounded-xl transition border border-lime-300 dark:border-lime-800/80" title="Add / Manage Shelves">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label data-i18n="lblNotes" class="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-1">Notes / Description</label>
+                    <textarea id="item-notes" rows="3" placeholder="Add optional details, serial numbers, or condition notes..." 
+                        class="w-full px-3 py-2.5 bg-lime-100/60 dark:bg-[#0a1108] border border-lime-300 dark:border-lime-900/80 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-lime-100 placeholder-lime-800/50 dark:placeholder-lime-400/40"></textarea>
+                </div>
+
+                <div class="pt-2 flex justify-end space-x-3">
+                    <button type="button" onclick="closeModal()" data-i18n="btnCancel" class="px-4 py-2.5 rounded-xl border border-lime-300 dark:border-lime-800 text-sm font-medium hover:bg-lime-200 dark:hover:bg-[#1a2a17] transition text-slate-800 dark:text-lime-200">
+                        Cancel
+                    </button>
+                    <button type="submit" data-i18n="btnSaveItem" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium shadow-lg shadow-emerald-600/20 transition">
+                        Save Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Print Tag Modal -->
+    <div id="print-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between no-print">
+                <h3 class="font-bold text-lg flex items-center space-x-2 text-slate-900 dark:text-white">
+                    <i data-lucide="printer" class="w-5 h-5 text-emerald-600"></i>
+                    <span data-i18n="printModalTitle">Printable Tag Sheet</span>
+                </h3>
+                <button onclick="closePrintModal()" class="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1 print:p-0">
+                <p data-i18n="printModalDesc" class="text-sm text-slate-500 dark:text-slate-400 mb-4 no-print">Print these tags out, cut them, and stick them on your boxes or items matching the numbers in your database.</p>
+                <div id="tag-sheet-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <!-- Dynamic tag cards -->
+                </div>
+            </div>
+
+            <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 no-print">
+                <span data-i18n="printReady" class="text-xs text-slate-500">Ready to print on standard paper</span>
+                <button onclick="window.print()" class="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl text-sm font-medium shadow-lg transition">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    <span data-i18n="btnPrintNow">Print Now</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Locations / Shelves Modal -->
+    <div id="location-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <h3 class="font-bold text-lg flex items-center gap-2 text-slate-900 dark:text-white">
+                    <i data-lucide="map-pin" class="w-5 h-5 text-emerald-600"></i>
+                    <span data-i18n="shelvesModalTitle">Manage Storage Locations & Shelves</span>
+                </h3>
+                <button onclick="closeLocationModal()" class="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <form onsubmit="addLocation(event)" class="flex gap-2">
+                    <input type="text" id="new-location-input" required placeholder="e.g. Shelf A - Tier 2, Garage Box #1" 
+                        class="flex-1 px-3 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition flex items-center gap-1">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span data-i18n="btnAdd">Add</span>
+                    </button>
+                </form>
+
+                <div class="border-t border-slate-200 dark:border-slate-700 pt-3">
+                    <h4 data-i18n="existingShelves" class="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-2">Existing Shelves & Locations</h4>
+                    <ul id="locations-list" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        <!-- Dynamic locations list -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Categories Modal -->
+    <div id="category-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <h3 class="font-bold text-lg flex items-center gap-2 text-slate-900 dark:text-white">
+                    <i data-lucide="tags" class="w-5 h-5 text-emerald-600"></i>
+                    <span data-i18n="catModalTitle">Manage Categories</span>
+                </h3>
+                <button onclick="closeCategoryModal()" class="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <form onsubmit="addCategory(event)" class="flex gap-2">
+                    <input type="text" id="new-category-input" required placeholder="e.g. Tools, Power Cables, Electronics" 
+                        class="flex-1 px-3 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition flex items-center gap-1">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span data-i18n="btnAdd">Add</span>
+                    </button>
+                </form>
+
+                <div class="border-t border-slate-200 dark:border-slate-700 pt-3">
+                    <h4 data-i18n="existingCategories" class="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-2">Existing Categories</h4>
+                    <ul id="categories-list" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        <!-- Dynamic categories list -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-lime-50 dark:bg-[#121d10] rounded-2xl max-w-md w-full border border-lime-300 dark:border-lime-900/80 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+            <div class="px-6 py-4 border-b border-lime-200 dark:border-lime-900/80 flex items-center justify-between bg-lime-100/50 dark:bg-[#0a1208]">
+                <h3 class="font-bold text-lg flex items-center gap-2 text-slate-900 dark:text-lime-100">
+                    <i data-lucide="settings" class="w-5 h-5 text-emerald-600 dark:text-lime-400"></i>
+                    <span data-i18n="settingsModalTitle">Settings</span>
+                </h3>
+                <button onclick="closeSettingsModal()" class="p-1 rounded-lg text-lime-800/60 dark:text-lime-400/60 hover:bg-lime-200 dark:hover:bg-[#1a2a17] transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <!-- Tagline Toggle -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 data-i18n="showTaglineTitle" class="text-sm font-semibold text-slate-900 dark:text-lime-100">Show Subtitle / Tagline</h4>
+                        <p data-i18n="showTaglineDesc" class="text-xs text-lime-900/70 dark:text-lime-400/80">Toggle display of "Never lose your gear again"</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="tagline-toggle-checkbox" onchange="toggleTaglineVisibility(this.checked)" class="sr-only peer">
+                        <div class="w-11 h-6 bg-lime-200 peer-focus:outline-none rounded-full peer dark:bg-lime-950 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-lime-800 peer-checked:bg-emerald-600"></div>
+                    </label>
+                </div>
+
+                <!-- Color Tint / Theme Option -->
+                <div class="border-t border-lime-200 dark:border-lime-900/80 pt-4">
+                    <h4 data-i18n="themeStyleTitle" class="text-sm font-semibold text-slate-900 dark:text-lime-100 mb-2">Background Tint Theme</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setThemeTint('lime')" id="theme-btn-lime" class="px-3 py-2 rounded-xl text-xs font-semibold border border-lime-500 bg-lime-200/80 dark:bg-lime-950 text-lime-900 dark:text-lime-200 flex items-center justify-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-lime-500"></span> Lime Green
+                        </button>
+                        <button onclick="setThemeTint('slate')" id="theme-btn-slate" class="px-3 py-2 rounded-xl text-xs font-semibold border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 flex items-center justify-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-slate-500"></span> Clean Slate
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div id="custom-alert" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-sm w-full border border-slate-200 dark:border-slate-700 shadow-2xl p-6 text-center">
+            <div id="alert-icon" class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 flex items-center justify-center mx-auto mb-4 border border-emerald-100 dark:border-emerald-800">
+                <i data-lucide="info" class="w-6 h-6"></i>
+            </div>
+            <h4 id="alert-title" class="font-bold text-lg mb-1 text-slate-900 dark:text-white">Notice</h4>
+            <p id="alert-message" class="text-sm text-slate-500 dark:text-slate-400 mb-6">Message goes here</p>
+            <button onclick="closeCustomAlert()" data-i18n="btnGotIt" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl font-medium text-sm transition">
+                Got it
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Language Dictionaries (English & Lithuanian)
+        const i18n = {
+            en: {
+                tagline: "Never lose your gear again",
+                settingsModalTitle: "Settings",
+                showTaglineTitle: "Show Subtitle / Tagline",
+                showTaglineDesc: "Toggle display of \"Never lose your gear again\"",
+                themeStyleTitle: "Background Tint Theme",
+                btnPrint: "Print Tags",
+                btnShelves: "Shelves",
+                btnCategories: "Categories",
+                btnExport: "Export",
+                btnImport: "Import",
+                btnAddItem: "Add Item",
+                statTotal: "Total Items",
+                statLocations: "Locations",
+                statCategories: "Categories",
+                statNextTag: "Next Tag No.",
+                searchPlaceholder: "Search by name, tag #, notes...",
+                allLocations: "All Locations",
+                allCategories: "All Categories",
+                btnReset: "Reset",
+                thTag: "Tag #",
+                thName: "Item Name",
+                thCategory: "Category",
+                thLocation: "Storage Location",
+                thNotes: "Notes / Details",
+                thActions: "Actions",
+                emptyTitle: "No items found",
+                emptyDesc: "Start adding your belongings and label them with numbers so you never lose track of where they are.",
+                btnAddFirst: "Add First Item",
+                modalAddTitle: "Add New Item",
+                modalEditTitle: "Edit Item",
+                lblCategory: "Category *",
+                optSelectCat: "Select Category",
+                lblTag: "Tag / Item Number *",
+                lblItemName: "Item Name *",
+                lblLocation: "Storage Location / Shelf *",
+                optSelectLoc: "Select Location or Shelf",
+                lblNotes: "Notes / Description",
+                btnCancel: "Cancel",
+                btnSaveItem: "Save Item",
+                printModalTitle: "Printable Tag Sheet",
+                printModalDesc: "Print these tags out, cut them, and stick them on your boxes or items matching the numbers in your database.",
+                printReady: "Ready to print on standard paper",
+                btnPrintNow: "Print Now",
+                shelvesModalTitle: "Manage Storage Locations & Shelves",
+                catModalTitle: "Manage Categories",
+                btnAdd: "Add",
+                existingShelves: "Existing Shelves & Locations",
+                existingCategories: "Existing Categories",
+                btnGotIt: "Got it",
+                successTitle: "Success",
+                successSaved: "Item successfully saved to database!",
+                successImported: "Successfully imported data from JSON file!",
+                errorTitle: "Error",
+                errorJson: "Failed to parse JSON file. Make sure it is a valid JSON document.",
+                missingTitle: "Missing Information",
+                missingDesc: "Please select a valid Category and Storage Location/Shelf.",
+                confirmDelete: "Are you sure you want to delete this item?",
+                inputShelfPlaceholder: "e.g. Shelf A - Tier 2, Garage Box #1",
+                inputCatPlaceholder: "e.g. Tools, Power Cables, Electronics",
+                inputNotesPlaceholder: "Add optional details, serial numbers, or condition notes..."
+            },
+            lt: {
+                tagline: "Daugiau niekada nepameskite savo daiktų",
+                settingsModalTitle: "Nustatymai",
+                showTaglineTitle: "Rodyti Subtitrą / Šūkį",
+                showTaglineDesc: "Įjungti/išjungti tekstą \"Daugiau niekada nepameskite savo daiktų\"",
+                themeStyleTitle: "Fono Spalvos Tema",
+                btnPrint: "Spausdinti Žymes",
+                btnShelves: "Lentynos",
+                btnCategories: "Kategorijos",
+                btnExport: "Eksportuoti",
+                btnImport: "Importuoti",
+                btnAddItem: "Pridėti Daiktą",
+                statTotal: "Iš viso Daiktų",
+                statLocations: "Vietos",
+                statCategories: "Kategorijos",
+                statNextTag: "Kitas Nr.",
+                searchPlaceholder: "Ieškoti pagal pavadinimą, Nr., pastabas...",
+                allLocations: "Visos Vietos",
+                allCategories: "Visos Kategorijos",
+                btnReset: "Išvalyti",
+                thTag: "Žymė #",
+                thName: "Daikto Pavadinimas",
+                thCategory: "Kategorija",
+                thLocation: "Laikymo Vieta",
+                thNotes: "Pastabos / Informacija",
+                thActions: "Veiksmai",
+                emptyTitle: "Daiktų nerasta",
+                emptyDesc: "Pradėkite pridėti savo daiktus ir sužymėkite juos numeriais, kad niekada nepamestumėte.",
+                btnAddFirst: "Pridėti Pirmąjį Daiktą",
+                modalAddTitle: "Pridėti Naują Daiktą",
+                modalEditTitle: "Redaguoti Daiktą",
+                lblCategory: "Kategorija *",
+                optSelectCat: "Pasirinkite Kategoriją",
+                lblTag: "Žymė / Daikto Numeris *",
+                lblItemName: "Daikto Pavadinimas *",
+                lblLocation: "Laikymo Vieta / Lentyna *",
+                optSelectLoc: "Pasirinkite Vietą arba Lentyną",
+                lblNotes: "Pastabos / Aprašymas",
+                btnCancel: "Atšaukti",
+                btnSaveItem: "Išsaugoti Daiktą",
+                printModalTitle: "Spausdinamos Žymės",
+                printModalDesc: "Apspausdinkite šias žymes, iškirpkite ir užklijuokite ant dėžių ar daiktų pagal numerius.",
+                printReady: "Paruošta spausdinti ant standartinio popieriaus",
+                btnPrintNow: "Spausdinti Dabar",
+                shelvesModalTitle: "Valdyti Laikymo Vietas ir Lentynas",
+                catModalTitle: "Valdyti Kategorijas",
+                btnAdd: "Pridėti",
+                existingShelves: "Esamos Lentynos ir Vietos",
+                existingCategories: "Esamos Kategorijos",
+                btnGotIt: "Supratau",
+                successTitle: "Pavyko",
+                successSaved: "Daiktas sėkmingai išsaugotas duomenų bazėje!",
+                successImported: "Duomenys sėkmingai importuoti iš JSON failo!",
+                errorTitle: "Klaida",
+                errorJson: "Nepavyko nuskaityti JSON failo. Įsitikinkite, kad failas tinkamas.",
+                missingTitle: "Trūksta Informacijos",
+                missingDesc: "Prašome pasirinkti galiojančią Kategoriją ir Laikymo Vietą/Lentyną.",
+                confirmDelete: "Ar tikrai norite ištrinti šį daiktą?",
+                inputShelfPlaceholder: "pvt. Lentyna A - 2 Aukštas, Garažo Dėžė #1",
+                inputCatPlaceholder: "pvt. Įrankiai, Laidai, Elektronika",
+                inputNotesPlaceholder: "Pridėkite papildomą informaciją, serijos numerį..."
+            }
+        };
+
+        // State Management
+        let currentLang = localStorage.getItem('david_tracker_lang') || 'en';
+        let showTagline = localStorage.getItem('david_tracker_show_tagline') !== 'false';
+        let themeTint = localStorage.getItem('david_tracker_tint') || 'lime';
+
+        let items = JSON.parse(localStorage.getItem('david_tracker_items')) || [
+            { id: '1', tag: 1, name: 'Cordless Drill & Bits', category: 'Tools', location: 'Shelf A - Top Rack', notes: 'Includes 2 batteries and charger' },
+            { id: '2', tag: 2, name: 'Tax Documents 2024', category: 'Documents', location: 'Office Desk Drawer', notes: 'Important folders' },
+            { id: '3', tag: 3, name: 'Camping Tent', category: 'Sports', location: 'Attic Shelf #2', notes: '4-person waterproof dome tent' }
+        ];
+
+        let customLocations = JSON.parse(localStorage.getItem('david_tracker_locations')) || [
+            'Shelf A - Top Rack', 'Shelf B - Middle', 'Garage Box #1', 'Office Desk Drawer', 'Attic Shelf #2'
+        ];
+
+        let customCategories = JSON.parse(localStorage.getItem('david_tracker_categories')) || [
+            'Tools', 'Documents', 'Sports', 'Electronics', 'Kitchenware', 'Collectibles'
+        ];
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initTheme();
+            applyThemeTint(themeTint);
+            applyTaglineVisibility();
+            applyLanguage();
+            renderItems();
+            updateStats();
+            populateDropdowns();
+        });
+
+        // Settings Modal Handlers
+        function openSettingsModal() {
+            document.getElementById('tagline-toggle-checkbox').checked = showTagline;
+            document.getElementById('settings-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+
+        function toggleTaglineVisibility(visible) {
+            showTagline = visible;
+            localStorage.setItem('david_tracker_show_tagline', visible);
+            applyTaglineVisibility();
+        }
+
+        function applyTaglineVisibility() {
+            const taglineEl = document.querySelector('[data-i18n="tagline"]');
+            if (taglineEl) {
+                if (showTagline) {
+                    taglineEl.classList.remove('hidden');
+                } else {
+                    taglineEl.classList.add('hidden');
+                }
+            }
+        }
+
+        function setThemeTint(tint) {
+            themeTint = tint;
+            localStorage.setItem('david_tracker_tint', tint);
+            applyThemeTint(tint);
+        }
+
+        function applyThemeTint(tint) {
+            const body = document.body;
+            if (tint === 'slate') {
+                body.className = body.className.replace(/bg-lime-[^\s]+/g, 'bg-slate-100').replace(/dark:bg-\[#[^\]]+\]/g, 'dark:bg-slate-950');
+            } else {
+                body.className = body.className.replace(/bg-slate-100/g, 'bg-lime-100/70').replace(/dark:bg-slate-950/g, 'dark:bg-[#0d160b]');
+            }
+        }
+
+        // Language Switcher
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'lt' : 'en';
+            localStorage.setItem('david_tracker_lang', currentLang);
+            applyLanguage();
+            renderItems();
+        }
+
+        function applyLanguage() {
+            document.getElementById('lang-label').innerText = currentLang === 'en' ? 'LT' : 'EN';
+            const langData = i18n[currentLang];
+
+            // Update text elements with data-i18n attributes
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (langData[key]) {
+                    el.innerText = langData[key];
+                }
+            });
+
+            // Update placeholders with null checks
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) searchInput.placeholder = langData.searchPlaceholder;
+
+            const locInput = document.getElementById('new-location-input');
+            if (locInput) locInput.placeholder = langData.inputShelfPlaceholder;
+
+            const catInput = document.getElementById('new-category-input');
+            if (catInput) catInput.placeholder = langData.inputCatPlaceholder;
+
+            const notesInput = document.getElementById('item-notes');
+            if (notesInput) notesInput.placeholder = langData.inputNotesPlaceholder;
+
+            populateDropdowns();
+        }
+
+        // Theme Toggle Handler
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        themeToggleBtn.addEventListener('click', () => {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        // Save to LocalStorage
+        function saveData() {
+            localStorage.setItem('david_tracker_items', JSON.stringify(items));
+            localStorage.setItem('david_tracker_locations', JSON.stringify(customLocations));
+            localStorage.setItem('david_tracker_categories', JSON.stringify(customCategories));
+            renderItems();
+            updateStats();
+            populateDropdowns();
+        }
+
+        // Location / Shelf Modal Handlers
+        function openLocationModal() {
+            renderLocationsList();
+            document.getElementById('location-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeLocationModal() {
+            document.getElementById('location-modal').classList.add('hidden');
+        }
+
+        function addLocation(e) {
+            e.preventDefault();
+            const input = document.getElementById('new-location-input');
+            const name = input.value.trim();
+            if (name && !customLocations.includes(name)) {
+                customLocations.push(name);
+                input.value = '';
+                saveData();
+                renderLocationsList();
+            }
+        }
+
+        function removeLocation(loc) {
+            customLocations = customLocations.filter(l => l !== loc);
+            saveData();
+            renderLocationsList();
+        }
+
+        function renderLocationsList() {
+            const list = document.getElementById('locations-list');
+            list.innerHTML = '';
+            if (customLocations.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-400">No shelves added yet.</p>`;
+                return;
+            }
+            customLocations.forEach(loc => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-900 text-sm border border-slate-200 dark:border-slate-700';
+                li.innerHTML = `
+                    <span class="flex items-center gap-2 truncate">
+                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-500"></i>
+                        <span>${escapeHtml(loc)}</span>
+                    </span>
+                    <button onclick="removeLocation('${escapeHtml(loc)}')" class="p-1 text-slate-400 hover:text-rose-500 rounded transition">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                `;
+                list.appendChild(li);
+            });
+            lucide.createIcons();
+        }
+
+        // Category Modal Handlers
+        function openCategoryModal() {
+            renderCategoriesList();
+            document.getElementById('category-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('category-modal').classList.add('hidden');
+        }
+
+        function addCategory(e) {
+            e.preventDefault();
+            const input = document.getElementById('new-category-input');
+            const name = input.value.trim();
+            if (name && !customCategories.includes(name)) {
+                customCategories.push(name);
+                input.value = '';
+                saveData();
+                renderCategoriesList();
+            }
+        }
+
+        function removeCategory(cat) {
+            customCategories = customCategories.filter(c => c !== cat);
+            saveData();
+            renderCategoriesList();
+        }
+
+        function renderCategoriesList() {
+            const list = document.getElementById('categories-list');
+            list.innerHTML = '';
+            if (customCategories.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-400">No categories added yet.</p>`;
+                return;
+            }
+            customCategories.forEach(cat => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-900 text-sm border border-slate-200 dark:border-slate-700';
+                li.innerHTML = `
+                    <span class="flex items-center gap-2 truncate">
+                        <i data-lucide="tag" class="w-3.5 h-3.5 text-emerald-500"></i>
+                        <span>${escapeHtml(cat)}</span>
+                    </span>
+                    <button onclick="removeCategory('${escapeHtml(cat)}')" class="p-1 text-slate-400 hover:text-rose-500 rounded transition">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                `;
+                list.appendChild(li);
+            });
+            lucide.createIcons();
+        }
+
+        // Custom Alert Modal
+        function showAlert(title, message) {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-message').innerText = message;
+            document.getElementById('custom-alert').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('custom-alert').classList.add('hidden');
+        }
+
+        // Modal Controls
+        function openModal(item = null) {
+            const modal = document.getElementById('item-modal');
+            const title = document.getElementById('modal-title');
+            const langData = i18n[currentLang];
+            
+            populateDropdowns();
+
+            if (item) {
+                title.innerText = langData.modalEditTitle;
+                document.getElementById('item-id').value = item.id;
+                document.getElementById('item-tag').value = item.tag;
+                document.getElementById('item-name').value = item.name;
+                document.getElementById('item-category').value = item.category;
+                document.getElementById('item-location').value = item.location;
+                document.getElementById('item-notes').value = item.notes || '';
+            } else {
+                title.innerText = langData.modalAddTitle;
+                document.getElementById('item-form').reset();
+                document.getElementById('item-id').value = '';
+                // Suggest next tag number
+                const maxTag = items.reduce((max, i) => Math.max(max, Number(i.tag) || 0), 0);
+                document.getElementById('item-tag').value = maxTag + 1;
+            }
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeModal() {
+            document.getElementById('item-modal').classList.add('hidden');
+        }
+
+        // CRUD Operations
+        function saveItem(e) {
+            e.preventDefault();
+            const langData = i18n[currentLang];
+            const id = document.getElementById('item-id').value;
+            const tag = parseInt(document.getElementById('item-tag').value);
+            const name = document.getElementById('item-name').value.trim();
+            const category = document.getElementById('item-category').value;
+            const location = document.getElementById('item-location').value;
+            const notes = document.getElementById('item-notes').value.trim();
+
+            if (!category || !location) {
+                showAlert(langData.missingTitle, langData.missingDesc);
+                return;
+            }
+
+            if (id) {
+                // Update
+                const index = items.findIndex(i => i.id === id);
+                if (index !== -1) {
+                    items[index] = { id, tag, name, category, location, notes };
+                }
+            } else {
+                // Create
+                const newItem = {
+                    id: Date.now().toString(),
+                    tag,
+                    name,
+                    category,
+                    location,
+                    notes
+                };
+                items.push(newItem);
+            }
+
+            saveData();
+            closeModal();
+            showAlert(langData.successTitle, langData.successSaved);
+        }
+
+        function deleteItem(id) {
+            const langData = i18n[currentLang];
+            if (confirm(langData.confirmDelete)) {
+                items = items.filter(i => i.id !== id);
+                saveData();
+            }
+        }
+
+        // Filter and Render Items
+        function filterItems() {
+            renderItems();
+        }
+
+        function resetFilters() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('filter-location').value = '';
+            document.getElementById('filter-category').value = '';
+            renderItems();
+        }
+
+        function renderItems() {
+            const searchQuery = document.getElementById('search-input').value.toLowerCase();
+            const locationFilter = document.getElementById('filter-location').value;
+            const categoryFilter = document.getElementById('filter-category').value;
+
+            const filtered = items.filter(item => {
+                const matchesSearch = 
+                    item.name.toLowerCase().includes(searchQuery) ||
+                    String(item.tag).includes(searchQuery) ||
+                    (item.notes && item.notes.toLowerCase().includes(searchQuery)) ||
+                    item.location.toLowerCase().includes(searchQuery) ||
+                    item.category.toLowerCase().includes(searchQuery);
+
+                const matchesLocation = !locationFilter || item.location === locationFilter;
+                const matchesCategory = !categoryFilter || item.category === categoryFilter;
+
+                return matchesSearch && matchesLocation && matchesCategory;
+            });
+
+            // Sort by tag number
+            filtered.sort((a, b) => Number(a.tag) - Number(b.tag));
+
+            const tbody = document.getElementById('items-table-body');
+            const emptyState = document.getElementById('empty-state');
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                return;
+            } else {
+                emptyState.classList.remove('flex');
+                emptyState.classList.add('hidden');
+            }
+
+            filtered.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-lime-200/50 dark:hover:bg-[#162514] transition';
+            tr.innerHTML = `
+                <td class="py-3.5 px-4 font-mono font-bold text-lime-800 dark:text-lime-300">#${item.tag}</td>
+                <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-lime-100">${escapeHtml(item.name)}</td>
+                <td class="py-3.5 px-4"><span class="px-2.5 py-1 rounded-full text-xs font-bold bg-lime-200/80 dark:bg-lime-950/80 text-lime-900 dark:text-lime-300 border border-lime-300 dark:border-lime-800">${escapeHtml(item.category)}</span></td>
+                <td class="py-3.5 px-4 flex items-center space-x-1.5 text-lime-950 dark:text-lime-200">
+                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-lime-700 dark:text-lime-400 flex-shrink-0"></i>
+                    <span class="truncate max-w-xs">${escapeHtml(item.location)}</span>
+                </td>
+                <td class="py-3.5 px-4 text-lime-900/70 dark:text-lime-300/70 truncate max-w-xs">${escapeHtml(item.notes || '-')}</td>
+                <td class="py-3.5 px-4 text-right space-x-1">
+                    <button onclick='openItemModalById("${item.id}")' class="p-1.5 rounded-lg text-lime-800/70 dark:text-lime-400 hover:text-emerald-600 hover:bg-lime-200 dark:hover:bg-[#1a2a17] transition" title="Edit">
+                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick='deleteItem("${item.id}")' class="p-1.5 rounded-lg text-lime-800/70 dark:text-lime-400 hover:text-rose-600 hover:bg-rose-100/60 dark:hover:bg-rose-950/40 transition" title="Delete">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+            lucide.createIcons();
+        }
+
+        function openItemModalById(id) {
+            const item = items.find(i => i.id === id);
+            if (item) openModal(item);
+        }
+
+        // Update Dashboard Statistics
+        function updateStats() {
+            document.getElementById('stat-total').innerText = items.length;
+            
+            const allLocations = new Set([...items.map(i => i.location), ...customLocations]);
+            document.getElementById('stat-locations').innerText = allLocations.size;
+
+            const allCategories = new Set([...items.map(i => i.category), ...customCategories]);
+            document.getElementById('stat-categories').innerText = allCategories.size;
+
+            const maxTag = items.reduce((max, i) => Math.max(max, Number(i.tag) || 0), 0);
+            document.getElementById('stat-next-tag').innerText = '#' + (maxTag + 1);
+        }
+
+        // Populate Filter and Form Dropdowns
+        function populateDropdowns() {
+            const langData = i18n[currentLang];
+
+            // Ensure all used locations & categories exist in memory
+            items.forEach(i => {
+                if (i.location && !customLocations.includes(i.location)) customLocations.push(i.location);
+                if (i.category && !customCategories.includes(i.category)) customCategories.push(i.category);
+            });
+
+            const locFilter = document.getElementById('filter-location');
+            const catFilter = document.getElementById('filter-category');
+            const itemLocSelect = document.getElementById('item-location');
+            const itemCatSelect = document.getElementById('item-category');
+
+            const currentLocFilter = locFilter.value;
+            const currentCatFilter = catFilter.value;
+            const currentItemLoc = itemLocSelect.value;
+            const currentItemCat = itemCatSelect.value;
+
+            // Populate Locations
+            const sortedLocations = [...customLocations].sort();
+            locFilter.innerHTML = `<option value="">${langData.allLocations}</option>`;
+            itemLocSelect.innerHTML = `<option value="">${langData.optSelectLoc}</option>`;
+            
+            sortedLocations.forEach(loc => {
+                const opt1 = document.createElement('option');
+                opt1.value = loc;
+                opt1.innerText = loc;
+                if (loc === currentLocFilter) opt1.selected = true;
+                locFilter.appendChild(opt1);
+
+                const opt2 = document.createElement('option');
+                opt2.value = loc;
+                opt2.innerText = loc;
+                if (loc === currentItemLoc) opt2.selected = true;
+                itemLocSelect.appendChild(opt2);
+            });
+
+            // Populate Categories
+            const sortedCategories = [...customCategories].sort();
+            catFilter.innerHTML = `<option value="">${langData.allCategories}</option>`;
+            itemCatSelect.innerHTML = `<option value="">${langData.optSelectCat}</option>`;
+
+            sortedCategories.forEach(cat => {
+                const opt1 = document.createElement('option');
+                opt1.value = cat;
+                opt1.innerText = cat;
+                if (cat === currentCatFilter) opt1.selected = true;
+                catFilter.appendChild(opt1);
+
+                const opt2 = document.createElement('option');
+                opt2.value = cat;
+                opt2.innerText = cat;
+                if (cat === currentItemCat) opt2.selected = true;
+                itemCatSelect.appendChild(opt2);
+            });
+        }
+
+        // Print Tags Sheet
+        function openPrintModal() {
+            const grid = document.getElementById('tag-sheet-grid');
+            grid.innerHTML = '';
+
+            const sorted = [...items].sort((a, b) => Number(a.tag) - Number(b.tag));
+
+            sorted.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'border-2 border-dashed border-emerald-300 dark:border-emerald-700 rounded-xl p-4 flex flex-col justify-between bg-white dark:bg-slate-900 h-32';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <span class="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400">#${item.tag}</span>
+                        <span class="text-[10px] uppercase font-semibold tracking-wider bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 rounded text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">${escapeHtml(item.category)}</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-sm truncate text-slate-900 dark:text-white">${escapeHtml(item.name)}</h4>
+                        <p class="text-xs text-slate-500 truncate flex items-center mt-0.5">
+                            <i data-lucide="map-pin" class="w-3 h-3 inline mr-1 text-emerald-500"></i>${escapeHtml(item.location)}
+                        </p>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            document.getElementById('print-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closePrintModal() {
+            document.getElementById('print-modal').classList.add('hidden');
+        }
+
+        // Export Database Backup
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+                items: items,
+                locations: customLocations,
+                categories: customCategories
+            }, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "david_tracker_backup.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        // Trigger hidden JSON file picker
+        function triggerImport() {
+            document.getElementById('import-file-input').click();
+        }
+
+        // Import and read JSON file
+        function importData(event) {
+            const langData = i18n[currentLang];
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        items = imported;
+                    } else if (imported && typeof imported === 'object') {
+                        if (Array.isArray(imported.items)) items = imported.items;
+                        if (Array.isArray(imported.locations)) customLocations = imported.locations;
+                        if (Array.isArray(imported.categories)) customCategories = imported.categories;
+                    }
+                    saveData();
+                    showAlert(langData.successTitle, langData.successImported);
+                } catch (err) {
+                    showAlert(langData.errorTitle, langData.errorJson);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // HTML Escape Helper
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    </script>
+</body>
+</html>
